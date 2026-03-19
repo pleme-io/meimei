@@ -7,6 +7,87 @@
 //! Platform-specific modules ([`go`], [`rust`], [`python`], [`ruby`]) re-export
 //! the appropriate converter under idiomatic names for each language.
 
+/// Split a name into words at delimiter boundaries (hyphens and underscores).
+/// This is the foundation all case converters build on.
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(meimei::split_words("foo-bar_baz"), vec!["foo", "bar", "baz"]);
+/// assert_eq!(meimei::split_words("single"), vec!["single"]);
+/// assert_eq!(meimei::split_words("").is_empty(), true);
+/// ```
+#[must_use]
+pub fn split_words(name: &str) -> Vec<&str> {
+    name.split(|c: char| c == '-' || c == '_')
+        .filter(|s| !s.is_empty())
+        .collect()
+}
+
+// ---------------------------------------------------------------------------
+// NamingConvention trait
+// ---------------------------------------------------------------------------
+
+/// Trait for naming convention strategies.
+/// Enables mockability in tests and swappable naming schemes.
+pub trait NamingConvention: Send + Sync {
+    /// Convert a name to the convention's type/class name form.
+    fn to_type_name(&self, name: &str) -> String;
+    /// Convert a name to the convention's field/variable name form.
+    fn to_field_name(&self, name: &str) -> String;
+    /// Convert a name to the convention's file name form.
+    fn to_file_name(&self, name: &str) -> String;
+}
+
+/// Rust naming convention.
+pub struct RustConvention;
+
+impl NamingConvention for RustConvention {
+    fn to_type_name(&self, name: &str) -> String {
+        to_pascal_case(name)
+    }
+    fn to_field_name(&self, name: &str) -> String {
+        to_snake_case(name)
+    }
+    fn to_file_name(&self, name: &str) -> String {
+        to_snake_case(name)
+    }
+}
+
+/// Go naming convention.
+pub struct GoConvention;
+
+impl NamingConvention for GoConvention {
+    fn to_type_name(&self, name: &str) -> String {
+        to_pascal_case(name)
+    }
+    fn to_field_name(&self, name: &str) -> String {
+        to_pascal_case(name)
+    }
+    fn to_file_name(&self, name: &str) -> String {
+        to_snake_case(name)
+    }
+}
+
+/// Python naming convention.
+pub struct PythonConvention;
+
+impl NamingConvention for PythonConvention {
+    fn to_type_name(&self, name: &str) -> String {
+        to_pascal_case(name)
+    }
+    fn to_field_name(&self, name: &str) -> String {
+        to_snake_case(name)
+    }
+    fn to_file_name(&self, name: &str) -> String {
+        to_snake_case(name)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Case converters
+// ---------------------------------------------------------------------------
+
 /// Convert a hyphenated or snake_case name to `PascalCase`.
 ///
 /// Splits on `-` and `_`, capitalizes the first character of each segment,
@@ -450,5 +531,135 @@ mod tests {
             "bound_aws_account_id"
         );
         assert_eq!(ruby::to_method("access_expires"), "access_expires");
+    }
+
+    // ── Word splitting ──────────────────────────────────────────
+
+    #[test]
+    fn split_words_basic() {
+        assert_eq!(split_words("foo-bar_baz"), vec!["foo", "bar", "baz"]);
+    }
+
+    #[test]
+    fn split_words_empty() {
+        assert!(split_words("").is_empty());
+    }
+
+    #[test]
+    fn split_words_no_delimiters() {
+        assert_eq!(split_words("foobar"), vec!["foobar"]);
+    }
+
+    #[test]
+    fn split_words_consecutive_delimiters() {
+        assert_eq!(split_words("foo--bar__baz"), vec!["foo", "bar", "baz"]);
+    }
+
+    // ── NamingConvention trait ──────────────────────────────────
+
+    #[test]
+    fn rust_convention() {
+        let c = RustConvention;
+        assert_eq!(c.to_type_name("my-type"), "MyType");
+        assert_eq!(c.to_field_name("my-field"), "my_field");
+        assert_eq!(c.to_file_name("my-module"), "my_module");
+    }
+
+    #[test]
+    fn go_convention() {
+        let c = GoConvention;
+        assert_eq!(c.to_type_name("my-type"), "MyType");
+        assert_eq!(c.to_field_name("my-field"), "MyField");
+    }
+
+    #[test]
+    fn python_convention() {
+        let c = PythonConvention;
+        assert_eq!(c.to_type_name("my-type"), "MyType");
+        assert_eq!(c.to_field_name("my-field"), "my_field");
+    }
+
+    #[test]
+    fn custom_naming_convention() {
+        // Demonstrates that NamingConvention is mockable
+        struct MockConvention;
+        impl NamingConvention for MockConvention {
+            fn to_type_name(&self, _: &str) -> String {
+                "MockType".to_string()
+            }
+            fn to_field_name(&self, _: &str) -> String {
+                "mock_field".to_string()
+            }
+            fn to_file_name(&self, _: &str) -> String {
+                "mock_file".to_string()
+            }
+        }
+        let c = MockConvention;
+        assert_eq!(c.to_type_name("anything"), "MockType");
+        assert_eq!(c.to_field_name("anything"), "mock_field");
+        assert_eq!(c.to_file_name("anything"), "mock_file");
+    }
+
+    // ── Stress tests ────────────────────────────────────────────
+
+    #[test]
+    fn pascal_case_long_name() {
+        let result = to_pascal_case("this-is-a-very-long-name-with-many-segments");
+        assert_eq!(result, "ThisIsAVeryLongNameWithManySegments");
+    }
+
+    #[test]
+    fn snake_case_preserves_numbers() {
+        assert_eq!(to_snake_case("v2-api-endpoint"), "v2_api_endpoint");
+    }
+
+    #[test]
+    fn camel_case_with_numbers() {
+        assert_eq!(to_camel_case("get-v2-items"), "getV2Items");
+    }
+
+    #[test]
+    fn screaming_snake_numbers() {
+        assert_eq!(to_screaming_snake_case("api-v2-key"), "API_V2_KEY");
+    }
+
+    #[test]
+    fn strip_prefix_unicode() {
+        assert_eq!(strip_provider_prefix("café_latte", "café"), "latte");
+    }
+
+    #[test]
+    fn all_conventions_roundtrip() {
+        let name = "my-api-resource";
+        let pascal = to_pascal_case(name);
+        let screaming = to_screaming_snake_case(name);
+        assert_eq!(pascal, "MyApiResource");
+        assert_eq!(screaming, "MY_API_RESOURCE");
+    }
+
+    // ── Platform module stress ──────────────────────────────────
+
+    #[test]
+    fn go_to_public_numbers() {
+        assert_eq!(go::to_public("get-v2-items"), "GetV2Items");
+    }
+
+    #[test]
+    fn go_field_tag_special_chars() {
+        assert_eq!(
+            go::to_field_tag("bound-aws-account-id"),
+            "bound_aws_account_id"
+        );
+    }
+
+    #[test]
+    fn rust_to_type_edge() {
+        assert_eq!(rust::to_type(""), "");
+        assert_eq!(rust::to_type("x"), "X");
+    }
+
+    #[test]
+    fn ruby_to_class_complex() {
+        assert_eq!(ruby::to_class("static-secret-value"), "StaticSecretValue");
     }
 }
