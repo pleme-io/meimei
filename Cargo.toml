@@ -1,0 +1,22 @@
+[package]
+name = "meimei"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89.0"
+description = "Meimei (命名) — zero-dependency case convention converters for code generation"
+homepage = "https://github.com/pleme-io/meimei"
+repository = "https://github.com/pleme-io/meimei"
+license = "MIT"
+categories = ["text-processing"]
+keywords = ["naming", "case-conversion", "codegen", "snake-case", "pascal-case"]
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
