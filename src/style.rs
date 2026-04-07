@@ -15,7 +15,7 @@ use crate::{to_camel_case, to_kebab_case, to_pascal_case, to_screaming_snake_cas
 /// assert_eq!(style.convert("hello-world"), "hello_world");
 /// assert_eq!(style.to_string(), "snake_case");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum CaseStyle {
     /// `PascalCase`
