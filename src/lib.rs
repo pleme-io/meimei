@@ -55,75 +55,61 @@ fn lowercase_first(s: &str) -> String {
 // ---------------------------------------------------------------------------
 
 /// Trait for naming convention strategies.
+///
 /// Enables mockability in tests and swappable naming schemes.
+/// The default implementation maps type names to `PascalCase`,
+/// field/variable names to `snake_case`, and file names to `snake_case` —
+/// the most common convention across Rust, Python, and Ruby.
 pub trait NamingConvention: Send + Sync {
     /// Convert a name to the convention's type/class name form.
-    fn to_type_name(&self, name: &str) -> String;
-    /// Convert a name to the convention's field/variable name form.
-    fn to_field_name(&self, name: &str) -> String;
-    /// Convert a name to the convention's file name form.
-    fn to_file_name(&self, name: &str) -> String;
-}
-
-/// Rust naming convention.
-pub struct RustConvention;
-
-impl NamingConvention for RustConvention {
+    ///
+    /// Default: [`to_pascal_case`].
+    #[must_use]
     fn to_type_name(&self, name: &str) -> String {
         to_pascal_case(name)
     }
+
+    /// Convert a name to the convention's field/variable name form.
+    ///
+    /// Default: [`to_snake_case`].
+    #[must_use]
     fn to_field_name(&self, name: &str) -> String {
         to_snake_case(name)
     }
+
+    /// Convert a name to the convention's file name form.
+    ///
+    /// Default: [`to_snake_case`].
+    #[must_use]
     fn to_file_name(&self, name: &str) -> String {
         to_snake_case(name)
     }
 }
 
-/// Go naming convention.
+/// Rust naming convention: `PascalCase` types, `snake_case` fields and files.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct RustConvention;
+impl NamingConvention for RustConvention {}
+
+/// Go naming convention: `PascalCase` types **and** fields, `snake_case` files.
+#[derive(Debug, Clone, Copy, Default)]
 pub struct GoConvention;
 
 impl NamingConvention for GoConvention {
-    fn to_type_name(&self, name: &str) -> String {
-        to_pascal_case(name)
-    }
     fn to_field_name(&self, name: &str) -> String {
         to_pascal_case(name)
     }
-    fn to_file_name(&self, name: &str) -> String {
-        to_snake_case(name)
-    }
 }
 
-/// Python naming convention.
+/// Python naming convention: `PascalCase` types, `snake_case` fields and files.
+#[derive(Debug, Clone, Copy, Default)]
 pub struct PythonConvention;
+impl NamingConvention for PythonConvention {}
 
-impl NamingConvention for PythonConvention {
-    fn to_type_name(&self, name: &str) -> String {
-        to_pascal_case(name)
-    }
-    fn to_field_name(&self, name: &str) -> String {
-        to_snake_case(name)
-    }
-    fn to_file_name(&self, name: &str) -> String {
-        to_snake_case(name)
-    }
-}
-
-/// Ruby naming convention.
+/// Ruby naming convention: `PascalCase` types, `snake_case` fields and files.
+#[derive(Debug, Clone, Copy, Default)]
 pub struct RubyConvention;
-
-impl NamingConvention for RubyConvention {
-    fn to_type_name(&self, name: &str) -> String {
-        to_pascal_case(name)
-    }
-    fn to_field_name(&self, name: &str) -> String {
-        to_snake_case(name)
-    }
-    fn to_file_name(&self, name: &str) -> String {
-        to_snake_case(name)
-    }
-}
+impl NamingConvention for RubyConvention {}
 
 // ---------------------------------------------------------------------------
 // Case converters
