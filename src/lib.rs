@@ -684,4 +684,370 @@ mod tests {
     fn ruby_to_class_complex() {
         assert_eq!(ruby::to_class("static-secret-value"), "StaticSecretValue");
     }
+
+    // ── RubyConvention trait ──────────────────────────────────────
+
+    #[test]
+    fn ruby_convention_type_name() {
+        let c = RubyConvention;
+        assert_eq!(c.to_type_name("my-type"), "MyType");
+    }
+
+    #[test]
+    fn ruby_convention_field_name() {
+        let c = RubyConvention;
+        assert_eq!(c.to_field_name("my-field"), "my_field");
+    }
+
+    #[test]
+    fn ruby_convention_file_name() {
+        let c = RubyConvention;
+        assert_eq!(c.to_file_name("my-module"), "my_module");
+    }
+
+    // ── Convention trait completeness ─────────────────────────────
+
+    #[test]
+    fn go_convention_file_name() {
+        let c = GoConvention;
+        assert_eq!(c.to_file_name("my-module"), "my_module");
+    }
+
+    #[test]
+    fn python_convention_file_name() {
+        let c = PythonConvention;
+        assert_eq!(c.to_file_name("my-module"), "my_module");
+    }
+
+    #[test]
+    fn convention_as_trait_object() {
+        let conventions: Vec<Box<dyn NamingConvention>> = vec![
+            Box::new(RustConvention),
+            Box::new(GoConvention),
+            Box::new(PythonConvention),
+            Box::new(RubyConvention),
+        ];
+        for c in &conventions {
+            assert!(!c.to_type_name("test-name").is_empty());
+            assert!(!c.to_field_name("test-name").is_empty());
+            assert!(!c.to_file_name("test-name").is_empty());
+        }
+    }
+
+    // ── Additional split_words edge cases ─────────────────────────
+
+    #[test]
+    fn split_words_leading_delimiter() {
+        assert_eq!(split_words("_leading"), vec!["leading"]);
+    }
+
+    #[test]
+    fn split_words_trailing_delimiter() {
+        assert_eq!(split_words("trailing-"), vec!["trailing"]);
+    }
+
+    #[test]
+    fn split_words_only_delimiters() {
+        assert!(split_words("_-_-").is_empty());
+    }
+
+    #[test]
+    fn split_words_single_char() {
+        assert_eq!(split_words("x"), vec!["x"]);
+    }
+
+    #[test]
+    fn split_words_mixed_delimiters() {
+        assert_eq!(split_words("a-b_c-d"), vec!["a", "b", "c", "d"]);
+    }
+
+    // ── Additional snake_case edge cases ──────────────────────────
+
+    #[test]
+    fn snake_case_consecutive_hyphens() {
+        assert_eq!(to_snake_case("a--b"), "a__b");
+    }
+
+    #[test]
+    fn snake_case_mixed_delimiters() {
+        assert_eq!(to_snake_case("foo-bar_baz"), "foo_bar_baz");
+    }
+
+    #[test]
+    fn snake_case_leading_hyphen() {
+        assert_eq!(to_snake_case("-leading"), "_leading");
+    }
+
+    #[test]
+    fn snake_case_trailing_hyphen() {
+        assert_eq!(to_snake_case("trailing-"), "trailing_");
+    }
+
+    // ── Additional camelCase edge cases ───────────────────────────
+
+    #[test]
+    fn camel_case_consecutive_delimiters() {
+        assert_eq!(to_camel_case("a--b__c"), "aBC");
+    }
+
+    #[test]
+    fn camel_case_leading_delimiter() {
+        assert_eq!(to_camel_case("_leading"), "leading");
+    }
+
+    #[test]
+    fn camel_case_trailing_delimiter() {
+        assert_eq!(to_camel_case("trailing_"), "trailing");
+    }
+
+    #[test]
+    fn camel_case_mixed_delimiters() {
+        assert_eq!(to_camel_case("foo-bar_baz"), "fooBarBaz");
+    }
+
+    #[test]
+    fn camel_case_already_camel() {
+        assert_eq!(to_camel_case("alreadyCamel"), "alreadyCamel");
+    }
+
+    // ── Additional kebab-case edge cases ──────────────────────────
+
+    #[test]
+    fn kebab_case_single_char() {
+        assert_eq!(to_kebab_case("x"), "x");
+    }
+
+    #[test]
+    fn kebab_case_consecutive_underscores() {
+        assert_eq!(to_kebab_case("a__b"), "a--b");
+    }
+
+    #[test]
+    fn kebab_case_leading_underscore() {
+        assert_eq!(to_kebab_case("_leading"), "-leading");
+    }
+
+    #[test]
+    fn kebab_case_trailing_underscore() {
+        assert_eq!(to_kebab_case("trailing_"), "trailing-");
+    }
+
+    #[test]
+    fn kebab_case_mixed_delimiters() {
+        assert_eq!(to_kebab_case("foo_bar-baz"), "foo-bar-baz");
+    }
+
+    #[test]
+    fn kebab_case_with_numbers() {
+        assert_eq!(to_kebab_case("v2_api_endpoint"), "v2-api-endpoint");
+    }
+
+    // ── Additional SCREAMING_SNAKE edge cases ─────────────────────
+
+    #[test]
+    fn screaming_snake_consecutive_hyphens() {
+        assert_eq!(to_screaming_snake_case("a--b"), "A__B");
+    }
+
+    #[test]
+    fn screaming_snake_leading_delimiter() {
+        assert_eq!(to_screaming_snake_case("-leading"), "_LEADING");
+    }
+
+    #[test]
+    fn screaming_snake_trailing_delimiter() {
+        assert_eq!(to_screaming_snake_case("trailing-"), "TRAILING_");
+    }
+
+    // ── Additional strip_provider_prefix edge cases ───────────────
+
+    #[test]
+    fn strip_prefix_empty_provider() {
+        assert_eq!(strip_provider_prefix("_foo", ""), "foo");
+    }
+
+    #[test]
+    fn strip_prefix_name_equals_provider() {
+        assert_eq!(strip_provider_prefix("aws", "aws"), "aws");
+    }
+
+    #[test]
+    fn strip_prefix_multiple_underscores() {
+        assert_eq!(
+            strip_provider_prefix("aws_s3_bucket", "aws"),
+            "s3_bucket"
+        );
+    }
+
+    // ── Additional platform module edge cases ─────────────────────
+
+    #[test]
+    fn go_to_public_empty() {
+        assert_eq!(go::to_public(""), "");
+    }
+
+    #[test]
+    fn go_to_field_tag_empty() {
+        assert_eq!(go::to_field_tag(""), "");
+    }
+
+    #[test]
+    fn rust_to_field_edge() {
+        assert_eq!(rust::to_field(""), "");
+        assert_eq!(rust::to_field("x"), "x");
+    }
+
+    #[test]
+    fn python_to_class_edge() {
+        assert_eq!(python::to_class(""), "");
+        assert_eq!(python::to_class("x"), "X");
+    }
+
+    #[test]
+    fn python_to_var_edge() {
+        assert_eq!(python::to_var(""), "");
+        assert_eq!(python::to_var("x"), "x");
+    }
+
+    #[test]
+    fn ruby_to_class_edge() {
+        assert_eq!(ruby::to_class(""), "");
+        assert_eq!(ruby::to_class("x"), "X");
+    }
+
+    #[test]
+    fn ruby_to_method_edge() {
+        assert_eq!(ruby::to_method(""), "");
+        assert_eq!(ruby::to_method("x"), "x");
+    }
+
+    // ── Table-driven cross-converter tests ────────────────────────
+
+    #[test]
+    fn table_driven_case_conversions() {
+        let cases: &[(&str, &str, &str, &str, &str, &str)] = &[
+            //  input,               pascal,              snake,               camel,               kebab,               screaming
+            ("hello-world",         "HelloWorld",        "hello_world",       "helloWorld",        "hello-world",       "HELLO_WORLD"),
+            ("hello_world",         "HelloWorld",        "hello_world",       "helloWorld",        "hello-world",       "HELLO_WORLD"),
+            ("single",             "Single",            "single",            "single",            "single",            "SINGLE"),
+            ("",                   "",                  "",                  "",                  "",                  ""),
+            ("a-b-c",             "ABC",               "a_b_c",             "aBC",               "a-b-c",             "A_B_C"),
+            ("api-v2-endpoint",   "ApiV2Endpoint",     "api_v2_endpoint",   "apiV2Endpoint",     "api-v2-endpoint",   "API_V2_ENDPOINT"),
+            ("x",                 "X",                 "x",                 "x",                 "x",                 "X"),
+        ];
+
+        for &(input, pascal, snake, camel, kebab, screaming) in cases {
+            assert_eq!(to_pascal_case(input), pascal, "pascal({input})");
+            assert_eq!(to_snake_case(input), snake, "snake({input})");
+            assert_eq!(to_camel_case(input), camel, "camel({input})");
+            assert_eq!(to_kebab_case(input), kebab, "kebab({input})");
+            assert_eq!(
+                to_screaming_snake_case(input),
+                screaming,
+                "screaming({input})"
+            );
+        }
+    }
+
+    // ── Table-driven strip_provider_prefix tests ──────────────────
+
+    #[test]
+    fn table_driven_strip_provider_prefix() {
+        let cases: &[(&str, &str, &str)] = &[
+            ("aws_s3_bucket", "aws", "s3_bucket"),
+            ("aws_lambda", "aws", "lambda"),
+            ("gcp_compute", "gcp", "compute"),
+            ("gcp_compute", "aws", "gcp_compute"),
+            ("standalone", "aws", "standalone"),
+            ("", "aws", ""),
+            ("aws_", "aws", ""),
+        ];
+
+        for &(name, provider, expected) in cases {
+            assert_eq!(
+                strip_provider_prefix(name, provider),
+                expected,
+                "strip({name}, {provider})"
+            );
+        }
+    }
+
+    // ── Convention consistency ─────────────────────────────────────
+
+    #[test]
+    fn all_conventions_produce_nonempty_for_nonempty_input() {
+        let input = "test-name";
+        let conventions: Vec<(&str, Box<dyn NamingConvention>)> = vec![
+            ("Rust", Box::new(RustConvention)),
+            ("Go", Box::new(GoConvention)),
+            ("Python", Box::new(PythonConvention)),
+            ("Ruby", Box::new(RubyConvention)),
+        ];
+        for (label, c) in &conventions {
+            assert!(
+                !c.to_type_name(input).is_empty(),
+                "{label}::to_type_name produced empty"
+            );
+            assert!(
+                !c.to_field_name(input).is_empty(),
+                "{label}::to_field_name produced empty"
+            );
+            assert!(
+                !c.to_file_name(input).is_empty(),
+                "{label}::to_file_name produced empty"
+            );
+        }
+    }
+
+    #[test]
+    fn all_conventions_produce_empty_for_empty_input() {
+        let input = "";
+        let conventions: Vec<(&str, Box<dyn NamingConvention>)> = vec![
+            ("Rust", Box::new(RustConvention)),
+            ("Go", Box::new(GoConvention)),
+            ("Python", Box::new(PythonConvention)),
+            ("Ruby", Box::new(RubyConvention)),
+        ];
+        for (label, c) in &conventions {
+            assert!(
+                c.to_type_name(input).is_empty(),
+                "{label}::to_type_name not empty for empty input"
+            );
+            assert!(
+                c.to_field_name(input).is_empty(),
+                "{label}::to_field_name not empty for empty input"
+            );
+            assert!(
+                c.to_file_name(input).is_empty(),
+                "{label}::to_file_name not empty for empty input"
+            );
+        }
+    }
+
+    // ── Unicode edge cases ────────────────────────────────────────
+
+    #[test]
+    fn pascal_case_unicode() {
+        assert_eq!(to_pascal_case("über-straße"), "ÜberStraße");
+    }
+
+    #[test]
+    fn camel_case_unicode() {
+        assert_eq!(to_camel_case("über-straße"), "überStraße");
+    }
+
+    #[test]
+    fn screaming_snake_unicode() {
+        assert_eq!(to_screaming_snake_case("über-straße"), "ÜBER_STRASSE");
+    }
+
+    #[test]
+    fn split_words_unicode() {
+        assert_eq!(split_words("über-straße"), vec!["über", "straße"]);
+    }
+
+    #[test]
+    fn kebab_case_unicode() {
+        assert_eq!(to_kebab_case("über_straße"), "über-straße");
+    }
 }
