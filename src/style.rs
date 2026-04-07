@@ -69,6 +69,18 @@ impl CaseStyle {
             Self::ScreamingSnake,
         ]
     }
+
+    /// Returns the canonical string label for this case style.
+    #[must_use]
+    pub const fn name(&self) -> &'static str {
+        match self {
+            Self::Pascal => "PascalCase",
+            Self::Snake => "snake_case",
+            Self::Camel => "camelCase",
+            Self::Kebab => "kebab-case",
+            Self::ScreamingSnake => "SCREAMING_SNAKE_CASE",
+        }
+    }
 }
 
 impl Default for CaseStyle {
@@ -80,14 +92,13 @@ impl Default for CaseStyle {
 
 impl core::fmt::Display for CaseStyle {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let label = match self {
-            Self::Pascal => "PascalCase",
-            Self::Snake => "snake_case",
-            Self::Camel => "camelCase",
-            Self::Kebab => "kebab-case",
-            Self::ScreamingSnake => "SCREAMING_SNAKE_CASE",
-        };
-        f.write_str(label)
+        f.write_str(self.name())
+    }
+}
+
+impl From<CaseStyle> for &'static str {
+    fn from(style: CaseStyle) -> Self {
+        style.name()
     }
 }
 
@@ -204,5 +215,18 @@ mod tests {
             unknown: "nope".to_string(),
         });
         assert!(err.to_string().contains("nope"));
+    }
+
+    #[test]
+    fn case_style_name_matches_display() {
+        for &style in CaseStyle::all() {
+            assert_eq!(style.name(), style.to_string());
+        }
+    }
+
+    #[test]
+    fn case_style_into_static_str() {
+        let s: &'static str = CaseStyle::Pascal.into();
+        assert_eq!(s, "PascalCase");
     }
 }
