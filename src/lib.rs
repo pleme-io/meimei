@@ -27,28 +27,27 @@ pub fn split_words(name: &str) -> Vec<&str> {
         .collect()
 }
 
-/// Capitalize the first character of a word, leaving the rest unchanged.
-fn capitalize_first(word: &str) -> String {
-    let mut chars = word.chars();
+/// Apply a character transformation to the first character of a string,
+/// leaving the rest unchanged.
+fn transform_first<I: Iterator<Item = char>>(s: &str, f: impl FnOnce(char) -> I) -> String {
+    let mut chars = s.chars();
     match chars.next() {
         Some(c) => {
-            let upper: String = c.to_uppercase().collect();
-            format!("{upper}{}", chars.as_str())
+            let transformed: String = f(c).collect();
+            format!("{transformed}{}", chars.as_str())
         }
         None => String::new(),
     }
 }
 
+/// Capitalize the first character of a word, leaving the rest unchanged.
+fn capitalize_first(word: &str) -> String {
+    transform_first(word, char::to_uppercase)
+}
+
 /// Lowercase the first character of a string, leaving the rest unchanged.
 fn lowercase_first(s: &str) -> String {
-    let mut chars = s.chars();
-    match chars.next() {
-        Some(c) => {
-            let lower: String = c.to_lowercase().collect();
-            format!("{lower}{}", chars.as_str())
-        }
-        None => String::new(),
-    }
+    transform_first(s, char::to_lowercase)
 }
 
 // ---------------------------------------------------------------------------
