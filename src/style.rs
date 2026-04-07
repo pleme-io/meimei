@@ -60,7 +60,7 @@ impl CaseStyle {
 
     /// Returns all supported case styles.
     #[must_use]
-    pub fn all() -> &'static [Self] {
+    pub const fn all() -> &'static [Self] {
         &[
             Self::Pascal,
             Self::Snake,
@@ -104,7 +104,7 @@ impl From<CaseStyle> for &'static str {
 
 impl PartialEq<str> for CaseStyle {
     fn eq(&self, other: &str) -> bool {
-        other.parse::<CaseStyle>().is_ok_and(|parsed| parsed == *self)
+        other.parse::<Self>().is_ok_and(|parsed| parsed == *self)
     }
 }
 

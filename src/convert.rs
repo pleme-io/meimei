@@ -35,13 +35,10 @@ pub fn split_words_iter(name: &str) -> impl Iterator<Item = &str> {
 /// leaving the rest unchanged.
 fn transform_first<I: Iterator<Item = char>>(s: &str, f: impl FnOnce(char) -> I) -> String {
     let mut chars = s.chars();
-    match chars.next() {
-        Some(c) => {
-            let transformed: String = f(c).collect();
-            format!("{transformed}{}", chars.as_str())
-        }
-        None => String::new(),
-    }
+    chars.next().map_or_else(String::new, |c| {
+        let transformed: String = f(c).collect();
+        format!("{transformed}{}", chars.as_str())
+    })
 }
 
 /// Capitalize the first character of a word, leaving the rest unchanged.
