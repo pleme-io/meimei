@@ -12,8 +12,8 @@ mod convention;
 mod style;
 
 pub use convert::{
-    split_words, strip_provider_prefix, to_camel_case, to_kebab_case, to_pascal_case,
-    to_screaming_snake_case, to_snake_case,
+    split_words, split_words_iter, strip_provider_prefix, to_camel_case, to_kebab_case,
+    to_pascal_case, to_screaming_snake_case, to_snake_case,
 };
 pub use convention::{
     GoConvention, NamingConvention, PythonConvention, RubyConvention, RustConvention,

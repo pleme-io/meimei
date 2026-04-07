@@ -43,6 +43,21 @@ impl CaseStyle {
         }
     }
 
+    /// Return the converter function pointer for this case style.
+    ///
+    /// Useful when you need to pass a converter as a function argument without
+    /// capturing `self`.
+    #[must_use]
+    pub fn as_converter_fn(&self) -> fn(&str) -> String {
+        match self {
+            Self::Pascal => to_pascal_case,
+            Self::Snake => to_snake_case,
+            Self::Camel => to_camel_case,
+            Self::Kebab => to_kebab_case,
+            Self::ScreamingSnake => to_screaming_snake_case,
+        }
+    }
+
     /// Returns all supported case styles.
     #[must_use]
     pub fn all() -> &'static [Self] {
@@ -171,5 +186,13 @@ mod tests {
     #[test]
     fn case_style_debug() {
         assert_eq!(format!("{:?}", CaseStyle::Pascal), "Pascal");
+    }
+
+    #[test]
+    fn case_style_as_converter_fn() {
+        for &style in CaseStyle::all() {
+            let f = style.as_converter_fn();
+            assert_eq!(f("hello-world"), style.convert("hello-world"));
+        }
     }
 }

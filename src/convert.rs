@@ -13,9 +13,23 @@ const DELIMITERS: [char; 2] = ['-', '_'];
 /// ```
 #[must_use]
 pub fn split_words(name: &str) -> Vec<&str> {
-    name.split(DELIMITERS)
-        .filter(|s| !s.is_empty())
-        .collect()
+    split_words_iter(name).collect()
+}
+
+/// Lazily split a name into words at delimiter boundaries.
+///
+/// Unlike [`split_words`], this returns an iterator instead of collecting into
+/// a `Vec`, which avoids allocation when the caller only needs to iterate.
+///
+/// # Examples
+///
+/// ```
+/// let words: Vec<_> = meimei::split_words_iter("foo-bar_baz").collect();
+/// assert_eq!(words, vec!["foo", "bar", "baz"]);
+/// ```
+#[must_use]
+pub fn split_words_iter(name: &str) -> impl Iterator<Item = &str> {
+    name.split(DELIMITERS).filter(|s| !s.is_empty())
 }
 
 /// Apply a character transformation to the first character of a string,
@@ -55,7 +69,7 @@ fn lowercase_first(s: &str) -> String {
 /// ```
 #[must_use]
 pub fn to_pascal_case(name: &str) -> String {
-    split_words(name).into_iter().map(capitalize_first).collect()
+    split_words_iter(name).map(capitalize_first).collect()
 }
 
 /// Convert a name to `snake_case` (hyphens become underscores).
@@ -601,5 +615,16 @@ mod tests {
     #[test]
     fn kebab_case_unicode() {
         assert_eq!(to_kebab_case("über_straße"), "über-straße");
+    }
+
+    // ── split_words_iter ──────────────────────────────────────────
+
+    #[test]
+    fn split_words_iter_matches_split_words() {
+        let inputs = ["", "foo-bar_baz", "single", "_-_-", "a--b__c"];
+        for input in inputs {
+            let iter_result: Vec<_> = split_words_iter(input).collect();
+            assert_eq!(iter_result, split_words(input), "mismatch for {input:?}");
+        }
     }
 }
