@@ -111,6 +111,21 @@ impl NamingConvention for PythonConvention {
     }
 }
 
+/// Ruby naming convention.
+pub struct RubyConvention;
+
+impl NamingConvention for RubyConvention {
+    fn to_type_name(&self, name: &str) -> String {
+        to_pascal_case(name)
+    }
+    fn to_field_name(&self, name: &str) -> String {
+        to_snake_case(name)
+    }
+    fn to_file_name(&self, name: &str) -> String {
+        to_snake_case(name)
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Case converters
 // ---------------------------------------------------------------------------
