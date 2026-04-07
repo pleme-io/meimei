@@ -105,6 +105,8 @@ impl core::fmt::Display for ParseCaseStyleError {
     }
 }
 
+impl core::error::Error for ParseCaseStyleError {}
+
 impl core::str::FromStr for CaseStyle {
     type Err = ParseCaseStyleError;
 
@@ -194,5 +196,13 @@ mod tests {
             let f = style.as_converter_fn();
             assert_eq!(f("hello-world"), style.convert("hello-world"));
         }
+    }
+
+    #[test]
+    fn parse_case_style_error_is_error_trait() {
+        let err: Box<dyn core::error::Error> = Box::new(ParseCaseStyleError {
+            unknown: "nope".to_string(),
+        });
+        assert!(err.to_string().contains("nope"));
     }
 }

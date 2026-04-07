@@ -137,8 +137,9 @@ pub fn to_screaming_snake_case(name: &str) -> String {
 /// ```
 #[must_use]
 pub fn strip_provider_prefix<'a>(name: &'a str, provider: &str) -> &'a str {
-    let prefix = format!("{provider}_");
-    name.strip_prefix(&prefix).unwrap_or(name)
+    name.strip_prefix(provider)
+        .and_then(|rest| rest.strip_prefix('_'))
+        .unwrap_or(name)
 }
 
 #[cfg(test)]
