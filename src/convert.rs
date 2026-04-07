@@ -27,7 +27,6 @@ pub fn split_words(name: &str) -> Vec<&str> {
 /// let words: Vec<_> = meimei::split_words_iter("foo-bar_baz").collect();
 /// assert_eq!(words, vec!["foo", "bar", "baz"]);
 /// ```
-#[must_use]
 pub fn split_words_iter(name: &str) -> impl Iterator<Item = &str> {
     name.split(DELIMITERS).filter(|s| !s.is_empty())
 }
