@@ -102,6 +102,18 @@ impl From<CaseStyle> for &'static str {
     }
 }
 
+impl PartialEq<str> for CaseStyle {
+    fn eq(&self, other: &str) -> bool {
+        other.parse::<CaseStyle>().is_ok_and(|parsed| parsed == *self)
+    }
+}
+
+impl PartialEq<CaseStyle> for str {
+    fn eq(&self, other: &CaseStyle) -> bool {
+        other == self
+    }
+}
+
 /// Error returned when parsing an unknown case style string.
 ///
 /// See [`CaseStyle::from_str`](core::str::FromStr::from_str).
@@ -228,5 +240,20 @@ mod tests {
     fn case_style_into_static_str() {
         let s: &'static str = CaseStyle::Pascal.into();
         assert_eq!(s, "PascalCase");
+    }
+
+    #[test]
+    fn case_style_partial_eq_str() {
+        assert!(CaseStyle::Snake == *"snake_case");
+        assert!(CaseStyle::Snake == *"snake");
+        assert!(CaseStyle::Pascal == *"PascalCase");
+        assert!(CaseStyle::Snake != *"PascalCase");
+        assert!(CaseStyle::Snake != *"unknown");
+    }
+
+    #[test]
+    fn str_partial_eq_case_style() {
+        assert!(*"snake_case" == CaseStyle::Snake);
+        assert!(*"PascalCase" == CaseStyle::Pascal);
     }
 }
