@@ -19,10 +19,13 @@
 /// ```
 #[must_use]
 pub fn split_words(name: &str) -> Vec<&str> {
-    name.split(|c: char| c == '-' || c == '_')
+    name.split(['-', '_'])
         .filter(|s| !s.is_empty())
         .collect()
 }
+
+/// Delimiter characters used for word splitting in identifiers.
+const DELIMITERS: [char; 2] = ['-', '_'];
 
 // ---------------------------------------------------------------------------
 // NamingConvention trait
@@ -88,7 +91,7 @@ impl NamingConvention for PythonConvention {
 // Case converters
 // ---------------------------------------------------------------------------
 
-/// Convert a hyphenated or snake_case name to `PascalCase`.
+/// Convert a hyphenated or `snake_case` name to `PascalCase`.
 ///
 /// Splits on `-` and `_`, capitalizes the first character of each segment,
 /// and concatenates.
@@ -102,7 +105,7 @@ impl NamingConvention for PythonConvention {
 /// ```
 #[must_use]
 pub fn to_pascal_case(name: &str) -> String {
-    name.split(|c: char| c == '-' || c == '_')
+    name.split(DELIMITERS)
         .filter(|s| !s.is_empty())
         .map(|s| {
             let mut chars = s.chars();
