@@ -7,6 +7,9 @@
 //! Platform-specific modules ([`go`], [`rust`], [`python`], [`ruby`]) re-export
 //! the appropriate converter under idiomatic names for each language.
 
+/// Delimiter characters used for word splitting in identifiers.
+const DELIMITERS: [char; 2] = ['-', '_'];
+
 /// Split a name into words at delimiter boundaries (hyphens and underscores).
 /// This is the foundation all case converters build on.
 ///
@@ -19,13 +22,34 @@
 /// ```
 #[must_use]
 pub fn split_words(name: &str) -> Vec<&str> {
-    name.split(['-', '_'])
+    name.split(DELIMITERS)
         .filter(|s| !s.is_empty())
         .collect()
 }
 
-/// Delimiter characters used for word splitting in identifiers.
-const DELIMITERS: [char; 2] = ['-', '_'];
+/// Capitalize the first character of a word, leaving the rest unchanged.
+fn capitalize_first(word: &str) -> String {
+    let mut chars = word.chars();
+    match chars.next() {
+        Some(c) => {
+            let upper: String = c.to_uppercase().collect();
+            format!("{upper}{}", chars.as_str())
+        }
+        None => String::new(),
+    }
+}
+
+/// Lowercase the first character of a string, leaving the rest unchanged.
+fn lowercase_first(s: &str) -> String {
+    let mut chars = s.chars();
+    match chars.next() {
+        Some(c) => {
+            let lower: String = c.to_lowercase().collect();
+            format!("{lower}{}", chars.as_str())
+        }
+        None => String::new(),
+    }
+}
 
 // ---------------------------------------------------------------------------
 // NamingConvention trait
@@ -105,19 +129,7 @@ impl NamingConvention for PythonConvention {
 /// ```
 #[must_use]
 pub fn to_pascal_case(name: &str) -> String {
-    name.split(DELIMITERS)
-        .filter(|s| !s.is_empty())
-        .map(|s| {
-            let mut chars = s.chars();
-            match chars.next() {
-                Some(c) => {
-                    let upper: String = c.to_uppercase().collect();
-                    format!("{upper}{}", chars.as_str())
-                }
-                None => String::new(),
-            }
-        })
-        .collect()
+    split_words(name).into_iter().map(capitalize_first).collect()
 }
 
 /// Convert a name to `snake_case` (hyphens become underscores).
@@ -143,15 +155,7 @@ pub fn to_snake_case(name: &str) -> String {
 /// ```
 #[must_use]
 pub fn to_camel_case(name: &str) -> String {
-    let pascal = to_pascal_case(name);
-    let mut chars = pascal.chars();
-    match chars.next() {
-        Some(c) => {
-            let lower: String = c.to_lowercase().collect();
-            format!("{lower}{}", chars.as_str())
-        }
-        None => String::new(),
-    }
+    lowercase_first(&to_pascal_case(name))
 }
 
 /// Convert a name to `kebab-case` (underscores become hyphens).
