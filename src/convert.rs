@@ -70,6 +70,10 @@ pub fn to_pascal_case(name: &str) -> String {
 
 /// Convert a name to `snake_case` (hyphens become underscores).
 ///
+/// This variant treats existing delimiters as the ONLY word boundaries —
+/// it does not split on case (`"camelCase"` → `"camelCase"`). For
+/// camel/Pascal splitting use [`pascal_to_snake_case`].
+///
 /// # Examples
 ///
 /// ```
@@ -78,6 +82,43 @@ pub fn to_pascal_case(name: &str) -> String {
 #[must_use]
 pub fn to_snake_case(name: &str) -> String {
     name.replace('-', "_")
+}
+
+/// Convert a `PascalCase` or `camelCase` name to `snake_case`.
+///
+/// Inserts an underscore before every non-leading uppercase character and
+/// lowercases the whole string. Hyphens are converted to underscores.
+/// Runs of uppercase letters are split per-letter (`"HTTPSProxy"` becomes
+/// `"h_t_t_p_s_proxy"`) — this matches the simple semantics previously
+/// hand-rolled in `pangea-forge::arch_gen`. For names already in snake/kebab
+/// form it behaves like [`to_snake_case`].
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(meimei::pascal_to_snake_case("QueroPlatform"), "quero_platform");
+/// assert_eq!(meimei::pascal_to_snake_case("SecureVpcNetwork"), "secure_vpc_network");
+/// assert_eq!(meimei::pascal_to_snake_case("already_snake"), "already_snake");
+/// assert_eq!(meimei::pascal_to_snake_case("kebab-case"), "kebab_case");
+/// ```
+#[must_use]
+pub fn pascal_to_snake_case(name: &str) -> String {
+    let mut result = String::with_capacity(name.len() + 4);
+    for (i, ch) in name.chars().enumerate() {
+        if ch == '-' {
+            result.push('_');
+        } else if ch.is_uppercase() && i > 0 {
+            result.push('_');
+            for lower in ch.to_lowercase() {
+                result.push(lower);
+            }
+        } else {
+            for lower in ch.to_lowercase() {
+                result.push(lower);
+            }
+        }
+    }
+    result
 }
 
 /// Convert a name to `camelCase`.
@@ -96,6 +137,10 @@ pub fn to_camel_case(name: &str) -> String {
 
 /// Convert a name to `kebab-case` (underscores become hyphens).
 ///
+/// This variant treats existing delimiters as the ONLY word boundaries —
+/// it does not split on case (`"camelCase"` → `"camelCase"`). For
+/// camel/Pascal splitting use [`pascal_to_kebab_case`].
+///
 /// # Examples
 ///
 /// ```
@@ -104,6 +149,41 @@ pub fn to_camel_case(name: &str) -> String {
 #[must_use]
 pub fn to_kebab_case(name: &str) -> String {
     name.replace('_', "-")
+}
+
+/// Convert a `PascalCase` or `camelCase` name to `kebab-case`.
+///
+/// Inserts a hyphen before every non-leading uppercase character and
+/// lowercases the whole string. Existing underscores also become hyphens.
+/// Runs of uppercase letters are split per-letter (see
+/// [`pascal_to_snake_case`] for the same caveat).
+///
+/// # Examples
+///
+/// ```
+/// assert_eq!(meimei::pascal_to_kebab_case("QueroPlatform"), "quero-platform");
+/// assert_eq!(meimei::pascal_to_kebab_case("SecureVpcNetwork"), "secure-vpc-network");
+/// assert_eq!(meimei::pascal_to_kebab_case("already-kebab"), "already-kebab");
+/// assert_eq!(meimei::pascal_to_kebab_case("snake_case"), "snake-case");
+/// ```
+#[must_use]
+pub fn pascal_to_kebab_case(name: &str) -> String {
+    let mut result = String::with_capacity(name.len() + 4);
+    for (i, ch) in name.chars().enumerate() {
+        if ch == '_' {
+            result.push('-');
+        } else if ch.is_uppercase() && i > 0 {
+            result.push('-');
+            for lower in ch.to_lowercase() {
+                result.push(lower);
+            }
+        } else {
+            for lower in ch.to_lowercase() {
+                result.push(lower);
+            }
+        }
+    }
+    result
 }
 
 /// Convert a name to `SCREAMING_SNAKE_CASE`.
@@ -215,6 +295,106 @@ mod tests {
     #[test]
     fn snake_case_single_char() {
         assert_eq!(to_snake_case("x"), "x");
+    }
+
+    // ── pascal_to_snake_case ──────────────────────────────────────────
+
+    #[test]
+    fn pascal_to_snake_from_pascal() {
+        assert_eq!(pascal_to_snake_case("QueroPlatform"), "quero_platform");
+    }
+
+    #[test]
+    fn pascal_to_snake_from_multiword_pascal() {
+        assert_eq!(pascal_to_snake_case("SecureVpcNetwork"), "secure_vpc_network");
+    }
+
+    #[test]
+    fn pascal_to_snake_from_camel() {
+        assert_eq!(pascal_to_snake_case("someOtherThing"), "some_other_thing");
+    }
+
+    #[test]
+    fn pascal_to_snake_simple() {
+        assert_eq!(pascal_to_snake_case("test"), "test");
+    }
+
+    #[test]
+    fn pascal_to_snake_already_snake() {
+        assert_eq!(pascal_to_snake_case("already_snake"), "already_snake");
+    }
+
+    #[test]
+    fn pascal_to_snake_from_kebab() {
+        assert_eq!(pascal_to_snake_case("kebab-case"), "kebab_case");
+    }
+
+    #[test]
+    fn pascal_to_snake_empty() {
+        assert_eq!(pascal_to_snake_case(""), "");
+    }
+
+    #[test]
+    fn pascal_to_snake_single_upper() {
+        assert_eq!(pascal_to_snake_case("A"), "a");
+    }
+
+    #[test]
+    fn pascal_to_snake_single_lower() {
+        assert_eq!(pascal_to_snake_case("a"), "a");
+    }
+
+    #[test]
+    fn pascal_to_snake_consecutive_upper() {
+        // Runs split per-letter (matches hand-rolled pangea-forge behavior)
+        assert_eq!(pascal_to_snake_case("HTTPSProxy"), "h_t_t_p_s_proxy");
+    }
+
+    #[test]
+    fn pascal_to_snake_leading_underscore() {
+        assert_eq!(pascal_to_snake_case("_leading"), "_leading");
+    }
+
+    // ── pascal_to_kebab_case ──────────────────────────────────────────
+
+    #[test]
+    fn pascal_to_kebab_from_pascal() {
+        assert_eq!(pascal_to_kebab_case("QueroPlatform"), "quero-platform");
+    }
+
+    #[test]
+    fn pascal_to_kebab_from_multiword_pascal() {
+        assert_eq!(pascal_to_kebab_case("SecureVpcNetwork"), "secure-vpc-network");
+    }
+
+    #[test]
+    fn pascal_to_kebab_from_camel() {
+        assert_eq!(pascal_to_kebab_case("someOtherThing"), "some-other-thing");
+    }
+
+    #[test]
+    fn pascal_to_kebab_already_kebab() {
+        assert_eq!(pascal_to_kebab_case("already-kebab"), "already-kebab");
+    }
+
+    #[test]
+    fn pascal_to_kebab_from_snake() {
+        assert_eq!(pascal_to_kebab_case("snake_case"), "snake-case");
+    }
+
+    #[test]
+    fn pascal_to_kebab_empty() {
+        assert_eq!(pascal_to_kebab_case(""), "");
+    }
+
+    #[test]
+    fn pascal_to_kebab_single_upper() {
+        assert_eq!(pascal_to_kebab_case("A"), "a");
+    }
+
+    #[test]
+    fn pascal_to_kebab_consecutive_upper() {
+        assert_eq!(pascal_to_kebab_case("HTTPSProxy"), "h-t-t-p-s-proxy");
     }
 
     // ── camelCase ─────────────────────────────────────────────────────
