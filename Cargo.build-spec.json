@@ -22,6 +22,10 @@
       "proc_macro": false,
       "build_script": null,
       "binaries": [],
+      "lib_target": {
+        "name": "meimei",
+        "path": "src/lib.rs"
+      },
       "dependencies": [],
       "runtime_dependencies": [],
       "build_dependencies": [],
