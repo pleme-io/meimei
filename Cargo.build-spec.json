@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "workspace": {
     "root": "/Users/drzzln/code/github/pleme-io/meimei",
     "members": [
@@ -21,12 +21,25 @@
       "features": [],
       "proc_macro": false,
       "build_script": null,
+      "links": null,
       "binaries": [],
-      "lib_target": null,
+      "lib_target": {
+        "name": "meimei",
+        "path": "src/lib.rs"
+      },
       "dependencies": [],
       "runtime_dependencies": [],
       "build_dependencies": [],
-      "crate_renames": {}
+      "crate_renames": {},
+      "build_rust_crate_args": {
+        "crateName": "meimei",
+        "version": "0.1.1",
+        "edition": "2024",
+        "release": true,
+        "libName": "meimei",
+        "libPath": "src/lib.rs",
+        "preBuild": "export CARGO_CRATE_NAME=meimei;"
+      }
     }
   },
   "root_crate": "meimei-0.1.1",
